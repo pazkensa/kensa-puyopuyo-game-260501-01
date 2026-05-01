@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ぷよぷよ風ゲーム</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      height: 100svh; /* iOS のアドレスバーを除いた正確な高さ（モダンブラウザ） */
+      font-family: sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+    #wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+    }
+    #game-row {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    canvas {
+      border: 3px solid #4a9eff;
+      background: #0d0d1a;
+      display: block;
+    }
+    #sidebar {
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel {
+      background: #16213e;
+      border: 2px solid #4a9eff;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .panel h3 {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+    .panel p {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4a9eff;
+    }
+    #next-canvas {
+      border: none;
+      background: transparent;
+    }
+    #message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      border: 3px solid #4a9eff;
+      border-radius: 12px;
+      padding: 32px 48px;
+      text-align: center;
+      display: none;
+    }
+    #message h2 { font-size: 28px; margin-bottom: 12px; color: #ff6b6b; }
+    #message p { font-size: 14px; color: #aaa; margin-bottom: 20px; }
+    #message button {
+      background: #4a9eff;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #controls {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.8;
+    }
+    #controls span { color: #ccc; }
+    .mode-select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid #4a9eff;
+      border-radius: 6px;
+      background: #0d0d1a;
+      color: #fff;
+      font-size: 12px;
+      padding: 7px 6px;
+    }
+    #pause-btn {
+      width: 100%;
+      padding: 10px 0;
+      border: 2px solid #4a9eff;
+      border-radius: 8px;
+      background: #16213e;
+      color: #4a9eff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    #pause-btn:hover {
+      background: #4a9eff;
+      color: #fff;
+    }
+    #pause-btn.paused {
+      border-color: #ff9f43;
+      color: #ff9f43;
+    }
+    #pause-btn.paused:hover {
+      background: #ff9f43;
+      color: #fff;
+    }
+    #touch-controls {
+      display: none;
+      align-items: center;
+      padding: 4px 0;
+    }
+    #tc-canvas {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #tc-sidebar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .touch-btn {
+      width: 68px;
+      height: 68px;
+      border: 2px solid #4a9eff;
+      border-radius: 14px;
+      background: rgba(74, 158, 255, 0.12);
+      color: #4a9eff;
+      font-size: 26px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .touch-btn:active { background: rgba(74, 158, 255, 0.35); }
+    @media (max-width: 560px) {
+      body { align-items: flex-start; }
+      #wrapper { padding: 4px; gap: 4px; }
+      #game-row { gap: 8px; }
+      #sidebar { width: 88px; gap: 6px; }
+      .panel { padding: 6px; }
+      .panel h3 { font-size: 10px; margin-bottom: 4px; }
+      .panel p { font-size: 16px; }
+      .mode-select { font-size: 10px; padding: 6px 4px; }
+      #controls { display: none; }
+      #pause-btn { padding: 7px 0; font-size: 12px; }
+      .touch-btn { width: 58px; height: 58px; font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="wrapper">
+    <div id="game-row">
+      <canvas id="gameCanvas"></canvas>
+      <div id="sidebar">
+        <div class="panel">
+          <h3>SCORE</h3>
+          <p id="score-display">0</p>
+        </div>
+        <div class="panel">
+          <h3>HI SCORE</h3>
+          <p id="high-score-display">0</p>
+        </div>
+        <div class="panel">
+          <h3>CHAIN</h3>
+          <p id="chain-display">0</p>
+        </div>
+        <div class="panel">
+          <h3>HI CHAIN</h3>
+          <p id="high-chain-display">0</p>
+        </div>
+        <div class="panel">
+          <h3>NEXT</h3>
+          <canvas id="next-canvas" width="96" height="96"></canvas>
+        </div>
+        <div class="panel">
+          <h3>MODE</h3>
+          <select id="image-mode-select" class="mode-select" aria-label="Falling object mode"></select>
+        </div>
+        <div class="panel" id="controls">
+          <span>←→</span> 移動<br>
+          <span>↓</span> 加速<br>
+          <span>Space</span> 回転<br>
+          <span>P</span> 一時停止
+        </div>
+        <button id="pause-btn" onclick="togglePause()">⏸ 一時停止</button>
+      </div>
+    </div>
+    <div id="touch-controls">
+      <div id="tc-canvas">
+        <button class="touch-btn" id="btn-left">←</button>
+        <button class="touch-btn" id="btn-rotate">↻</button>
+        <button class="touch-btn" id="btn-right">→</button>
+      </div>
+      <div id="tc-sidebar">
+        <button class="touch-btn" id="btn-down">↓</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="message">
+    <h2>GAME OVER</h2>
+    <p id="final-score"></p>
+    <p id="final-high-score"></p>
+    <p id="final-high-chain"></p>
+    <button onclick="restartGame()">もう一度</button>
+  </div>
+
+  <script src="image-config.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
