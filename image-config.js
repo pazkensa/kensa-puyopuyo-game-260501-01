@@ -22,6 +22,9 @@ const IMAGE_MODES = {
       'images/mode02-kensastudent/C-segmented-form-01-260430-01.png',
       'images/mode02-kensastudent/C-segmented-form-02-260430-01.png',
       'images/mode02-kensastudent/C-segmented-form-03-260430-01.png',
+      'images/mode02-kensastudent/D-poly-erythroblasts01-260527-01.png',
+      'images/mode02-kensastudent/D-poly-erythroblasts02-260527-01.png',
+      'images/mode02-kensastudent/D-poly-erythroblasts03-260527-01.png',
     ],
   },
 };
